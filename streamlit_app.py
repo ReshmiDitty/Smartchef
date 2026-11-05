@@ -68,3 +68,4 @@ embedded_html = html_content.replace(
 
 # Render the exact website full-bleed in Streamlit
 components.html(embedded_html, height=3800, scrolling=True)
+
