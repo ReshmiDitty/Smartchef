@@ -29,22 +29,42 @@ st.set_page_config(
 # Hide Streamlit default UI chrome (menus, padding, header, footer)
 st.markdown("""
 <style>
-    #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
-    [data-testid="stToolbar"] {display: none;}
-    [data-testid="stHeader"] {display: none;}
-    [data-testid="stDecoration"] {display: none;}
-    .block-container {
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        max-width: 100% !important;
+    /* 1. Hide all default Streamlit chrome, status, headers, and footers */
+    #MainMenu, header, footer, 
+    [data-testid="stToolbar"], 
+    [data-testid="stHeader"], 
+    [data-testid="stDecoration"], 
+    [data-testid="stStatusWidget"],
+    [data-testid="collapsedControl"] {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
     }
+    
+    /* 2. Remove all outer Streamlit margins, scrollbars, and padding */
+    html, body, .stApp, 
+    [data-testid="stAppViewContainer"], 
+    [data-testid="stMain"], 
+    .main, .block-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }
+
+    /* 3. Make iframe full-screen taking the entire browser window (matching localhost 1:1) */
     iframe {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
         border: none !important;
-        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        z-index: 999999 !important;
     }
 </style>
 """, unsafe_allow_html=True)
