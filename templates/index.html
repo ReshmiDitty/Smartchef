@@ -1,0 +1,509 @@
+{% extends "base.html" %}
+
+{% block title %}SmartChef – Intelligent Recipe Suggestion System{% endblock %}
+
+{% block content %}
+<!-- =========================================================================
+     1. HERO SECTION
+     ========================================================================= -->
+<section class="hero-section" id="hero">
+  <div class="hero-container">
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-pulse"></span>
+        <span>✨ Smart Kitchen Assistant • Instant Match</span>
+      </div>
+
+      <h1 class="hero-title">
+        Turn Ingredients In Your Kitchen Into <span class="text-gradient">Delicious Meals</span>
+      </h1>
+
+      <p class="hero-description">
+        Never wonder what to cook again. Pick whatever ingredients you have in your fridge or pantry, and SmartChef will instantly calculate the best recipe matches, suggest clever ingredient substitutions, and guide you with step-by-step cooking instructions.
+      </p>
+
+      <div class="hero-actions">
+        <a href="#finder" class="btn btn-primary btn-lg">
+          <span>Find Recipes Now</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"></path>
+          </svg>
+        </a>
+        <a href="#signature-dishes" class="btn btn-outline btn-lg">
+          <span>Browse Dishes</span>
+        </a>
+      </div>
+
+      <!-- Quick Metrics Strip -->
+      <div class="hero-stats-strip">
+        <div class="stat-item">
+          <div class="stat-number">24</div>
+          <div class="stat-label">Curated Recipes</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-number">100%</div>
+          <div class="stat-label">Tested Instructions</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-number">14+</div>
+          <div class="stat-label">Smart Substitutions</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <div class="stat-number">&lt; 15 min</div>
+          <div class="stat-label">Quick Meal Options</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero Visual: Mouth-Watering Dish Spotlight Card -->
+    <div class="hero-visual">
+      <div class="hero-spotlight-card" onclick="ChefApp.openRecipeModalById('paneer-butter-masala')">
+        <div class="spotlight-image-wrap">
+          <img src="https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=800&q=80" alt="Paneer Butter Masala" class="spotlight-img" />
+          <div class="spotlight-floating-badge">
+            <span class="match-star">⭐</span> 96% Pantry Match
+          </div>
+          <div class="spotlight-overlay">
+            <span class="spotlight-diet-pill diet-veg">🟢 Veg</span>
+            <span class="spotlight-time-pill">⏱️ 30 mins</span>
+          </div>
+        </div>
+        <div class="spotlight-body">
+          <div class="spotlight-cuisine">Chef's Signature • North Indian</div>
+          <h3 class="spotlight-title">Paneer Butter Masala</h3>
+          <p class="spotlight-desc">
+            Tender cottage cheese cubes in a silky, mildly sweet makhani gravy enriched with butter, cashew cream, and kasuri methi.
+          </p>
+          <div class="spotlight-ingredients-wrap">
+            <span class="spotlight-ing-label">Key Ingredients:</span>
+            <div class="spotlight-chips">
+              <span class="ing-tag-mini">paneer</span>
+              <span class="ing-tag-mini">butter</span>
+              <span class="ing-tag-mini">tomato</span>
+              <span class="ing-tag-mini">cashews</span>
+              <span class="ing-tag-mini">cream</span>
+              <span class="ing-tag-mini">garam-masala</span>
+              <span class="ing-tag-more">+6 more</span>
+            </div>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm btn-block mt-3">
+            <span>Click to View Full Recipe & Instructions &rarr;</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================================
+     2. RECIPE FINDER TOOL (INTEGRATED DIRECTLY ON PAGE)
+     ========================================================================= -->
+<section class="finder-main-section" id="finder">
+  <div class="section-container">
+    <div class="section-header">
+      <div class="hero-badge">
+        <span class="badge-pulse"></span>
+        <span>Interactive Recipe Matching Engine</span>
+      </div>
+      <h2 class="section-heading">What's in Your Kitchen?</h2>
+      <p class="section-subheading">
+        Select your available ingredients below or use a quick preset basket. SmartChef will calculate match percentages, detect missing ingredients, and infer valid substitutions in real time.
+      </p>
+    </div>
+
+    <div class="finder-layout">
+
+      <!-- LEFT SIDEBAR: Controls & Ingredient Selector -->
+      <aside class="finder-sidebar">
+        <div class="sidebar-card">
+          <div class="sidebar-header">
+            <h3 class="sidebar-title">Select Ingredients</h3>
+            <span class="selected-count-badge" id="selectedCountBadge">0 selected</span>
+          </div>
+
+          <!-- Quick Presets -->
+          <div class="control-group">
+            <label class="control-label">Quick Presets</label>
+            <div class="presets-row">
+              <button type="button" class="preset-chip" onclick="ChefApp.applyPreset('dal-rice')">🍛 Dal & Rice</button>
+              <button type="button" class="preset-chip" onclick="ChefApp.applyPreset('pasta-dinner')">🍝 Pasta</button>
+              <button type="button" class="preset-chip" onclick="ChefApp.applyPreset('paneer-curry')">🧀 Paneer</button>
+              <button type="button" class="preset-chip" onclick="ChefApp.applyPreset('chicken-feast')">🍗 Chicken</button>
+              <button type="button" class="preset-chip" onclick="ChefApp.applyPreset('salad-bowl')">🥗 Salad</button>
+            </div>
+          </div>
+
+          <!-- Custom Ingredient Input -->
+          <div class="control-group">
+            <label class="control-label" for="customIngInput">Add Custom Ingredient</label>
+            <div class="input-with-button">
+              <input type="text" id="customIngInput" class="form-input" placeholder="e.g. mushrooms, tofu, basil..." />
+              <button type="button" id="addCustomIngBtn" class="btn btn-secondary btn-sm">Add</button>
+            </div>
+          </div>
+
+          <!-- Selected Tray -->
+          <div class="control-group">
+            <div class="tray-header">
+              <label class="control-label">Your Pantry Tray</label>
+              <button type="button" id="clearAllIngsBtn" class="text-link-danger" onclick="ChefApp.clearAllIngredients()">Clear All</button>
+            </div>
+            <div class="selected-tray" id="selectedTray">
+              <div class="tray-empty-placeholder" id="trayEmptyMsg">
+                No ingredients picked yet. Select chips below or use a preset!
+              </div>
+            </div>
+          </div>
+
+          <!-- Categorized Ingredient Chips Accordion -->
+          <div class="control-group">
+            <label class="control-label">Browse Common Ingredients</label>
+            <div class="category-tabs" id="categoryTabs">
+              {% for category, items in categories.items() %}
+              <div class="category-group">
+                <button type="button" class="category-accordion-btn active" data-target="cat-{{ loop.index }}">
+                  <span>{{ category }}</span>
+                  <span class="accordion-arrow">&blacktriangledown;</span>
+                </button>
+                <div class="category-chip-container" id="cat-{{ loop.index }}">
+                  {% for ing in items %}
+                  <button type="button" class="ingredient-chip" data-ing="{{ ing }}" onclick="ChefApp.toggleIngredient('{{ ing }}')">
+                    <span class="chip-check"></span>
+                    <span class="chip-text">{{ ing.replace('-', ' ') }}</span>
+                  </button>
+                  {% endfor %}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="sidebar-divider"></div>
+
+          <!-- Filters: Diet & Cooking Time -->
+          <form id="recipeFilterForm" onsubmit="ChefApp.handleSearchSubmit(event)">
+            <!-- Dietary Filter -->
+            <div class="control-group">
+              <label class="control-label">Dietary Preference</label>
+              <div class="diet-radio-group">
+                <label class="diet-radio-label">
+                  <input type="radio" name="diet" value="all" checked onchange="ChefApp.triggerAutoSearch()">
+                  <span class="diet-radio-pill">All</span>
+                </label>
+                <label class="diet-radio-label">
+                  <input type="radio" name="diet" value="veg" onchange="ChefApp.triggerAutoSearch()">
+                  <span class="diet-radio-pill">🟢 Veg</span>
+                </label>
+                <label class="diet-radio-label">
+                  <input type="radio" name="diet" value="non-veg" onchange="ChefApp.triggerAutoSearch()">
+                  <span class="diet-radio-pill">🔴 Non-Veg</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Max Cooking Time Slider -->
+            <div class="control-group">
+              <div class="slider-header">
+                <label class="control-label" for="timeSlider">Max Cooking Time</label>
+                <span class="slider-value-badge" id="timeSliderVal">60 mins</span>
+              </div>
+              <input type="range" id="timeSlider" class="form-range" min="10" max="90" step="5" value="60" oninput="ChefApp.handleTimeSliderChange(this.value)">
+              <div class="slider-ticks">
+                <span>10m</span>
+                <span>30m</span>
+                <span>60m</span>
+                <span>90m</span>
+              </div>
+            </div>
+
+            <!-- Sorting Option -->
+            <div class="control-group">
+              <label class="control-label" for="sortBySelect">Sort Results By</label>
+              <select id="sortBySelect" class="form-select" onchange="ChefApp.triggerAutoSearch()">
+                <option value="score">Highest Match % (Default)</option>
+                <option value="time">Fastest Cooking Time</option>
+                <option value="missing">Fewest Missing Ingredients</option>
+              </select>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="sidebar-actions">
+              <button type="submit" class="btn btn-primary btn-block btn-lg" id="searchSubmitBtn">
+                <span id="btnSearchText">Find Matching Recipes</span>
+                <span id="btnSearchSpinner" class="spinner hidden"></span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </aside>
+
+      <!-- RIGHT PANEL: Results Area -->
+      <main class="finder-results-area">
+        <!-- Results Status Bar -->
+        <div class="results-header-bar" id="resultsHeaderBar">
+          <div class="results-stats">
+            <h3 class="results-title" id="resultsTitle">Recipe Matches</h3>
+            <p class="results-summary" id="resultsSummary">
+              Pick ingredients on the left to see ranked recipe matches.
+            </p>
+          </div>
+          <div class="results-engine-badge">
+            <span class="engine-indicator-dot"></span>
+            <span id="resultsEngineName">AI Matcher Active</span>
+          </div>
+        </div>
+
+        <!-- Feedback & Empty States -->
+        <div class="empty-state-card" id="emptyStatePrompt">
+          <div class="empty-state-icon">🥣</div>
+          <h3 class="empty-state-title">Your Pantry Tray is Empty</h3>
+          <p class="empty-state-text">
+            Choose ingredients from the sidebar or pick an instant preset below:
+          </p>
+          <div class="empty-state-actions">
+            <button class="btn btn-outline btn-sm" onclick="ChefApp.applyPreset('dal-rice')">Try "Dal & Rice"</button>
+            <button class="btn btn-outline btn-sm" onclick="ChefApp.applyPreset('pasta-dinner')">Try "Pasta"</button>
+            <button class="btn btn-outline btn-sm" onclick="ChefApp.applyPreset('paneer-curry')">Try "Paneer"</button>
+          </div>
+        </div>
+
+        <!-- No Results Found State -->
+        <div class="empty-state-card hidden" id="noResultsState">
+          <div class="empty-state-icon">🔍</div>
+          <h3 class="empty-state-title">No Recipes Matched</h3>
+          <p class="empty-state-text">
+            No recipes matched your selected filters. Try extending the cooking time slider or switching the dietary filter to "All".
+          </p>
+          <button class="btn btn-secondary btn-sm" onclick="ChefApp.resetFilters()">Reset Filters</button>
+        </div>
+
+        <!-- Loading Skeleton -->
+        <div class="results-skeleton-grid hidden" id="resultsSkeleton">
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+        </div>
+
+        <!-- Recipe Cards Grid Container -->
+        <div class="recipe-cards-grid" id="recipeCardsGrid"></div>
+      </main>
+
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================================
+     3. SIGNATURE DISHES SHOWCASE (PICTURES, CONTENT & RICH INGREDIENTS)
+     ========================================================================= -->
+<section class="section bg-card-surface" id="signature-dishes">
+  <div class="section-container">
+    <div class="section-header">
+      <h2 class="section-heading">Signature Dishes You Can Cook Today</h2>
+      <p class="section-subheading">
+        Explore popular culinary classics with complete ingredient lists and foolproof step-by-step instructions. Click any dish to view its recipe.
+      </p>
+    </div>
+
+    <div class="signature-dishes-grid">
+      {% for dish in showcase_dishes %}
+      <div class="signature-dish-card" onclick="ChefApp.openRecipeModalById('{{ dish.id }}')">
+        <div class="signature-image-container">
+          <img src="{{ dish.image }}" alt="{{ dish.name }}" class="signature-dish-img" />
+          <div class="signature-top-badges">
+            <span class="diet-badge diet-{{ dish.diet }}">
+              {% if dish.diet == 'veg' %}🟢 Veg{% else %}🔴 Non-Veg{% endif %}
+            </span>
+            <span class="cuisine-pill">{{ dish.cuisine }}</span>
+          </div>
+          <div class="signature-time-badge">⏱️ {{ dish.time }} mins</div>
+        </div>
+
+        <div class="signature-content">
+          <h3 class="signature-dish-title">{{ dish.name }}</h3>
+          <p class="signature-dish-text">{{ dish.description }}</p>
+
+          <div class="signature-ingredients-section">
+            <span class="ingredients-header-title">Ingredients ({{ dish.ingredients|length }} items):</span>
+            <div class="signature-chips-flex">
+              {% for ing in dish.ingredients %}
+              <span class="ing-chip-item">{{ ing.replace('-', ' ') }}</span>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="signature-card-footer">
+            <span class="click-hint-badge">👆 Click card to view recipe instructions &rarr;</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================================
+     4. ALL 24 CURATED RECIPES (RICH GRID WITH PHOTOS & CLICK TO VIEW)
+     ========================================================================= -->
+<section class="section recipes-preview-section" id="all-recipes">
+  <div class="section-container">
+    <div class="section-header-flex">
+      <div>
+        <h2 class="section-heading">All 24 Curated Recipes</h2>
+        <p class="section-subheading">
+          Click any recipe card below to view its complete photo, rich ingredient breakdown, and detailed cooking steps.
+        </p>
+      </div>
+      <a href="#finder" class="btn btn-primary">Try Recipe Finder &uarr;</a>
+    </div>
+
+    <div class="recipes-rich-grid">
+      {% for recipe in featured_recipes %}
+      <div class="recipe-rich-card" onclick="ChefApp.openRecipeModalById('{{ recipe.id }}')">
+        <div class="recipe-rich-img-wrap">
+          <img src="{{ recipe.image }}" alt="{{ recipe.name }}" class="recipe-rich-img" loading="lazy" />
+          <div class="recipe-rich-badge-row">
+            <span class="diet-badge diet-{{ recipe.diet }}">
+              {% if recipe.diet == 'veg' %}🟢 Veg{% else %}🔴 Non-Veg{% endif %}
+            </span>
+            <span class="time-pill-dark">⏱️ {{ recipe.time }}m</span>
+          </div>
+        </div>
+
+        <div class="recipe-rich-body">
+          <div class="recipe-rich-meta">
+            <span class="cuisine-tag-sm">{{ recipe.cuisine }}</span>
+            <span class="ing-count-sm">🥣 {{ recipe.ingredients|length }} ingredients</span>
+          </div>
+
+          <h3 class="recipe-rich-title">{{ recipe.name }}</h3>
+          
+          <p class="recipe-rich-desc">
+            {{ recipe.description }}
+          </p>
+
+          <div class="recipe-rich-ingredients">
+            <div class="rich-chips-container">
+              {% for ing in recipe.ingredients[:7] %}
+              <span class="rich-ing-chip">{{ ing.replace('-', ' ') }}</span>
+              {% endfor %}
+              {% if recipe.ingredients|length > 7 %}
+              <span class="rich-ing-chip chip-more">+{{ recipe.ingredients|length - 7 }} more</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="recipe-card-action-bar">
+            <span class="view-recipe-link">View Recipe Details &rarr;</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- =========================================================================
+     5. HOW IT WORKS SECTION
+     ========================================================================= -->
+<section class="section bg-card-surface" id="how-it-works">
+  <div class="section-container">
+    <div class="section-header">
+      <div class="hero-badge">
+        <span class="badge-pulse"></span>
+        <span>Matching Workflow</span>
+      </div>
+      <h2 class="section-heading">How SmartChef Works</h2>
+      <p class="section-subheading">
+        From opening your fridge to enjoying a gourmet home-cooked meal in 4 easy steps.
+      </p>
+    </div>
+
+    <div class="flow-pipeline-container">
+      <div class="flow-node">
+        <div class="flow-icon-circle icon-blue">
+          <span>🥕</span>
+        </div>
+        <div class="flow-step-num">Step 1</div>
+        <h4 class="flow-step-title">Select Ingredients</h4>
+        <p class="flow-step-desc">Pick what you have in your fridge or pantry from categorized chips.</p>
+        <div class="flow-code-tag">tomato, onion, rice...</div>
+      </div>
+
+      <div class="flow-arrow">&rarr;</div>
+
+      <div class="flow-node">
+        <div class="flow-icon-circle icon-purple">
+          <span>⚡</span>
+        </div>
+        <div class="flow-step-num">Step 2</div>
+        <h4 class="flow-step-title">Pantry Matching</h4>
+        <p class="flow-step-desc">The matching engine checks your inventory against 24 curated recipe profiles.</p>
+        <div class="flow-code-tag">Instant Evaluation</div>
+      </div>
+
+      <div class="flow-arrow">&rarr;</div>
+
+      <div class="flow-node highlight-node">
+        <div class="flow-icon-circle icon-amber">
+          <span>💡</span>
+        </div>
+        <div class="flow-step-num">Step 3</div>
+        <h4 class="flow-step-title">Smart Substitutions</h4>
+        <p class="flow-step-desc">Missing butter? The engine suggests olive oil so you don't need a grocery trip.</p>
+        <div class="flow-code-tag">olive-oil &rarr; butter</div>
+      </div>
+
+      <div class="flow-arrow">&rarr;</div>
+
+      <div class="flow-node">
+        <div class="flow-icon-circle icon-emerald">
+          <span>🍽️</span>
+        </div>
+        <div class="flow-step-num">Step 4</div>
+        <h4 class="flow-step-title">Cook & Enjoy</h4>
+        <p class="flow-step-desc">Follow simple, step-by-step instructions with preparation timings.</p>
+        <div class="flow-code-tag">Ready to Serve!</div>
+      </div>
+    </div>
+
+    <div class="features-split-grid mt-3">
+      <div class="feature-detail-card">
+        <div class="feature-icon-box">🥗</div>
+        <h3 class="feature-card-title">Zero Food Waste</h3>
+        <p class="feature-card-text">
+          Instead of buying new groceries for every meal, SmartChef prioritizes recipes that use up what you already have on hand. It ranks dishes by match percentage so you know exactly which recipe requires the fewest extra ingredients.
+        </p>
+      </div>
+
+      <div class="feature-detail-card">
+        <div class="feature-icon-box">⏱️</div>
+        <h3 class="feature-card-title">Time-Budget Filters</h3>
+        <p class="feature-card-text">
+          Only have 15 or 20 minutes between tasks or after work? Use the cooking time slider to instantly filter for quick stir-fries, pastas, or salads that fit your schedule without sacrificing flavor.
+        </p>
+      </div>
+
+      <div class="feature-detail-card">
+        <div class="feature-icon-box">🌱</div>
+        <h3 class="feature-card-title">Strict Dietary Rules</h3>
+        <p class="feature-card-text">
+          Toggle between Vegetarian and Non-Vegetarian modes with confidence. The filter ensures zero contamination of non-veg recipes when you are cooking vegetarian meals.
+        </p>
+      </div>
+
+      <div class="feature-detail-card">
+        <div class="feature-icon-box">💡</div>
+        <h3 class="feature-card-title">Intelligent Ingredient Swaps</h3>
+        <p class="feature-card-text">
+          SmartChef automatically recognizes common kitchen substitutes:
+          <br>&bull; <em>Olive Oil or Cooking Oil</em> in place of <em>Butter / Ghee</em>
+          <br>&bull; <em>Tofu</em> in place of <em>Paneer</em>
+          <br>&bull; <em>Milk / Yogurt</em> in place of <em>Heavy Cream</em>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

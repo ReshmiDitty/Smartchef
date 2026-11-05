@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}SmartChef – Intelligent Recipe Suggestion System{% endblock %}</title>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Custom Modern CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <header class="navbar-wrapper">
+    <div class="navbar-container">
+      <a href="#hero" class="brand-logo">
+        <span class="brand-icon">🍳</span>
+        <div class="brand-text">
+          <span class="brand-title">Smart<span class="brand-accent">Chef</span></span>
+          <span class="brand-subtitle">Recipe Suggestion System</span>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation Links -->
+      <nav class="nav-menu">
+        <a href="#hero" class="nav-link active">Home</a>
+        <a href="#finder" class="nav-link">Recipe Finder</a>
+        <a href="#signature-dishes" class="nav-link">Signature Dishes</a>
+        <a href="#all-recipes" class="nav-link">All 24 Recipes</a>
+        <a href="#how-it-works" class="nav-link">How It Works</a>
+      </nav>
+
+      <!-- Header Actions -->
+      <div class="header-actions">
+        <div class="engine-badge badge-smart" title="Smart Matching Engine: Active">
+          <span class="engine-dot"></span>
+          <span class="engine-label">Smart Matcher Active</span>
+        </div>
+        <a href="#finder" class="btn btn-primary btn-sm nav-cta">Find Recipes</a>
+      </div>
+
+      <!-- Mobile Hamburger Toggle -->
+      <button class="mobile-toggle" id="mobileMenuBtn" aria-label="Toggle navigation">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile Menu Dropdown -->
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="#hero" class="mobile-nav-link" onclick="ChefApp.closeMobileMenu()">Home</a>
+      <a href="#finder" class="mobile-nav-link" onclick="ChefApp.closeMobileMenu()">Recipe Finder</a>
+      <a href="#signature-dishes" class="mobile-nav-link" onclick="ChefApp.closeMobileMenu()">Signature Dishes</a>
+      <a href="#all-recipes" class="mobile-nav-link" onclick="ChefApp.closeMobileMenu()">All 24 Recipes</a>
+      <a href="#how-it-works" class="mobile-nav-link" onclick="ChefApp.closeMobileMenu()">How It Works</a>
+    </div>
+  </header>
+
+  <!-- Main Content Block -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Recipe Details Modal (With Rich Hero Image & Full Instructions) -->
+  <div class="modal-backdrop" id="recipeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-container">
+      <div class="modal-image-header" id="modalImageWrap">
+        <img id="modalRecipeImage" src="" alt="Recipe Dish" class="modal-cover-img" />
+        <button class="modal-close-floating-btn" id="modalCloseBtn" aria-label="Close modal">&times;</button>
+        <div class="modal-image-overlay">
+          <span class="modal-cuisine-badge" id="modalCuisine">Italian</span>
+          <h3 class="modal-title" id="modalRecipeName">Recipe Name</h3>
+          <div class="modal-meta-row">
+            <span class="modal-meta-pill" id="modalDietPill">🟢 Veg</span>
+            <span class="modal-meta-pill" id="modalTimePill">⏱️ 25 mins</span>
+            <span class="modal-meta-pill" id="modalScorePill">🎯 100% Match</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <!-- Recipe Description -->
+        <p class="modal-dish-desc" id="modalDishDesc"></p>
+
+        <!-- Ingredients Breakdown -->
+        <div class="modal-section">
+          <h4 class="section-title">Ingredients Checklist</h4>
+          <div class="ingredients-split-grid">
+            <div class="split-column split-have">
+              <div class="split-col-title">
+                <span class="split-icon check-icon">✓</span>
+                <span>You Have (<span id="modalHaveCount">0</span>)</span>
+              </div>
+              <ul class="chip-list" id="modalHaveList"></ul>
+            </div>
+            <div class="split-column split-missing">
+              <div class="split-col-title">
+                <span class="split-icon cross-icon">✕</span>
+                <span>To Buy / Needed (<span id="modalMissingCount">0</span>)</span>
+              </div>
+              <ul class="chip-list" id="modalMissingList"></ul>
+            </div>
+          </div>
+
+          <!-- Substitutions alert if applied -->
+          <div class="substitution-box hidden" id="modalSubBox">
+            <div class="sub-box-icon">💡</div>
+            <div class="sub-box-content">
+              <strong>Smart Substitution Inferred:</strong>
+              <div id="modalSubList"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step-by-Step Cooking Instructions -->
+        <div class="modal-section">
+          <h4 class="section-title">Step-by-Step Cooking Method</h4>
+          <ol class="instructions-steps-list" id="modalStepsList"></ol>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="modalDismissBtn">Close Recipe</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <div class="footer-grid">
+        <div class="footer-col brand-col">
+          <div class="footer-brand">
+            <span class="footer-logo">🍳</span>
+            <span class="footer-brand-title">Smart<span class="brand-accent">Chef</span></span>
+          </div>
+          <p class="footer-desc">
+            An intelligent recipe suggestion system that matches available pantry ingredients with curated global dishes using smart pattern matching and ingredient substitutions.
+          </p>
+          <div class="footer-engine-status">
+            <span class="engine-indicator-light light-sbcl"></span>
+            <span>Smart Recipe Matching: <strong>Active</strong></span>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Quick Jump</h4>
+          <ul class="footer-links">
+            <li><a href="#hero">Home</a></li>
+            <li><a href="#finder">Recipe Finder</a></li>
+            <li><a href="#signature-dishes">Signature Dishes</a></li>
+            <li><a href="#all-recipes">All 24 Recipes</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Cooking Features</h4>
+          <ul class="footer-links">
+            <li><a href="#finder">Pantry Ingredient Matching</a></li>
+            <li><a href="#finder">Dietary Filters (Veg / Non-Veg)</a></li>
+            <li><a href="#how-it-works">Smart Ingredient Substitutions</a></li>
+            <li><a href="#how-it-works">Quick 15-Minute Meals</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-heading">Kitchen Tips</h4>
+          <p class="footer-text-sm">
+            Keep staple aromatics like garlic, onions, olive oil, and basic spices well-stocked in your pantry. SmartChef can unlock over 15 delicious meals with just a few fresh additions!
+          </p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2026 SmartChef • Intelligent Recipe Suggestion System. All rights reserved.</p>
+        <div class="footer-bottom-badge">
+          <span class="badge-tag">Smart Kitchen AI</span>
+          <span class="badge-tag">Zero Food Waste</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Main JavaScript File -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
