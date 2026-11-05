@@ -672,6 +672,7 @@ def suggest_recipes(
     """
     Main recommendation entrypoint.
     Applies filters, computes list-matching scores, and sorts ranked results.
+    Strictly filters out recipes that do not contain user's selected ingredients.
     """
     if user_ingredients is None:
         user_ingredients = []
@@ -684,19 +685,30 @@ def suggest_recipes(
     
     evaluated = [evaluate_recipe(r, norm_user, SUBSTITUTION_RULES) for r in time_filtered]
     
-    # Filter by minimum score (if user entered ingredients)
     if norm_user:
-        qualified = [ev for ev in evaluated if ev["score"] >= min_score]
+        # Strictly require recipes to contain user's selected ingredients
+        has_matches = [ev for ev in evaluated if ev["matched_count"] > 0 and ev["score"] > 0]
+        
+        if not has_matches:
+            qualified = []
+        else:
+            max_matched = max(ev["matched_count"] for ev in has_matches)
+            # If user selected multiple ingredients and strong multi-match recipes exist,
+            # require at least 2 matched ingredients to exclude weak 1-ingredient noise
+            if len(norm_user) >= 2 and max_matched >= 2:
+                qualified = [ev for ev in has_matches if ev["matched_count"] >= 2]
+            else:
+                qualified = [ev for ev in has_matches if ev["matched_count"] >= 1]
     else:
         qualified = evaluated
 
-    # Sort results
+    # Sort results: primary by matched_count desc, then score desc, then time asc
     if sort_by == "time":
-        ranked = sorted(qualified, key=lambda x: (x["time"], -x["score"]))
+        ranked = sorted(qualified, key=lambda x: (x["time"], -x["matched_count"], -x["score"]))
     elif sort_by == "missing":
-        ranked = sorted(qualified, key=lambda x: (len(x["missing_ingredients"]), -x["score"]))
-    else: # default: score descending, then time ascending
-        ranked = sorted(qualified, key=lambda x: (-x["score"], x["time"]))
+        ranked = sorted(qualified, key=lambda x: (len(x["missing_ingredients"]), -x["matched_count"], -x["score"]))
+    else: # default: matched_count descending, then score descending, then time ascending
+        ranked = sorted(qualified, key=lambda x: (-x["matched_count"], -x["score"], x["time"]))
 
     return {
         "engine": "Smart List-Processing Engine",

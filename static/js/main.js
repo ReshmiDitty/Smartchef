@@ -532,23 +532,38 @@ const ChefApp = (() => {
 
     let evaluated = filtered.map(r => evaluateRecipeClient(r, normUser));
 
+    let qualified = [];
     if (normUser.length > 0) {
-      evaluated = evaluated.filter(e => e.score > 0);
+      // Must contain selected ingredients (exclude 0-match recipes)
+      const hasMatches = evaluated.filter(e => e.matched_count > 0 && e.score > 0);
+      if (hasMatches.length > 0) {
+        const maxMatched = Math.max(...hasMatches.map(e => e.matched_count));
+        // If user selected multiple ingredients and strong multi-match recipes exist,
+        // require at least 2 matching ingredients to eliminate single-item noise
+        if (normUser.length >= 2 && maxMatched >= 2) {
+          qualified = hasMatches.filter(e => e.matched_count >= 2);
+        } else {
+          qualified = hasMatches.filter(e => e.matched_count >= 1);
+        }
+      }
+    } else {
+      qualified = evaluated;
     }
 
     if (sortBy === 'time') {
-      evaluated.sort((a, b) => a.time - b.time || b.score - a.score);
+      qualified.sort((a, b) => a.time - b.time || b.matched_count - a.matched_count || b.score - a.score);
     } else if (sortBy === 'missing') {
-      evaluated.sort((a, b) => a.missing_ingredients.length - b.missing_ingredients.length || b.score - a.score);
+      qualified.sort((a, b) => a.missing_ingredients.length - b.missing_ingredients.length || b.matched_count - a.matched_count || b.score - a.score);
     } else {
-      evaluated.sort((a, b) => b.score - a.score || a.time - b.time);
+      // Default: prioritize highest number of matched user ingredients, then percentage score
+      qualified.sort((a, b) => b.matched_count - a.matched_count || b.score - a.score || a.time - b.time);
     }
 
     return {
       engine: "Smart List Processor (Active)",
       total_evaluated: RECIPES_DATA.length,
-      total_matches: evaluated.length,
-      results: evaluated
+      total_matches: qualified.length,
+      results: qualified
     };
   }
 
@@ -880,7 +895,7 @@ const ChefApp = (() => {
         diet: state.diet,
         max_time: state.maxTime,
         sort_by: state.sortBy,
-        min_score: 0.0
+        min_score: 1.0
       };
 
       let data = null;

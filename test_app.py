@@ -80,6 +80,26 @@ def run_tests():
         print(f"  AI Chef Advice: {ai_data['reply'][:100]}...")
         print("  -> Passed: Groq AI Chef endpoint responds with intelligent culinary advice!")
 
+        # Test 6: Strict Ingredient Matching & Noise Exclusion
+        test_payload = {
+            "ingredients": ["celery", "mushroom", "broccoli", "bell-pepper", "noodles"],
+            "diet": "veg",
+            "max_time": 60,
+            "sort_by": "score"
+        }
+        res = client.post("/api/suggest", json=test_payload)
+        print(f"\n[Test 6] POST /api/suggest (Strict Filter) -> HTTP {res.status_code}")
+        assert res.status_code == 200
+        data6 = json.loads(res.data)
+        assert data6["total_matches"] == 1, f"Expected 1 matching recipe, got {data6['total_matches']}"
+        assert data6["results"][0]["id"] == "vegetable-stir-fry"
+        # Verify no 0% match recipes leaked through
+        for r in data6["results"]:
+            assert r["matched_count"] >= 2, f"Expected at least 2 matching ingredients, got {r['matched_count']}"
+            assert r["score"] > 0
+        print(f"  Match Result: {data6['results'][0]['name']} (contains {data6['results'][0]['matched_ingredients']})")
+        print("  -> Passed: Dishes without user ingredients are strictly excluded from suggestions!")
+
     print("\n" + "=" * 60)
     print("ALL TESTS PASSED SUCCESSFULLY! CLEAN WEBSITE VERIFIED!")
     print("=" * 60)

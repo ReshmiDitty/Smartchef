@@ -141,7 +141,7 @@ def run_lisp_engine(ingredients: list, diet: str = "all", max_time: int = 120) -
     else:
         raise ValueError(f"Could not parse Lisp JSON output: {output_text}")
 
-def suggest(ingredients: list, diet: str = "all", max_time: int = 120, min_score: float = 0.0, sort_by: str = "score") -> dict:
+def suggest(ingredients: list, diet: str = "all", max_time: int = 120, min_score: float = 1.0, sort_by: str = "score") -> dict:
     """High-level suggestion orchestrator."""
     if is_sbcl_available():
         try:
@@ -241,7 +241,7 @@ def api_suggest():
     ingredients = data.get("ingredients", [])
     diet = data.get("diet", "all")
     max_time = int(data.get("max_time", 120))
-    min_score = float(data.get("min_score", 0.0))
+    min_score = float(data.get("min_score", 1.0))
     sort_by = data.get("sort_by", "score")
 
     if not isinstance(ingredients, list):
