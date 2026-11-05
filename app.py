@@ -23,6 +23,19 @@ app = Flask(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LISP_SCRIPT_PATH = os.path.join(BASE_DIR, "lisp", "recipes.lisp")
 
+# Auto-load local .env file if present
+_env_file = os.path.join(BASE_DIR, ".env")
+if os.path.isfile(_env_file):
+    try:
+        with open(_env_file, "r", encoding="utf-8") as _f:
+            for _line in _f:
+                _line = _line.strip()
+                if _line and not _line.startswith("#") and "=" in _line:
+                    _k, _v = _line.split("=", 1)
+                    os.environ.setdefault(_k.strip(), _v.strip())
+    except Exception:
+        pass
+
 # Groq API configuration for Chef Smart AI Advisor
 def get_groq_api_key() -> str:
     """Returns active Groq API key from environment or assembled default."""

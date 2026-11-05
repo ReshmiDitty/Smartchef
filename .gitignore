@@ -27,6 +27,10 @@ ENV/
 env.bak/
 venv.bak/
 
+# Environment variables & local secrets
+.env
+.env.local
+
 # IDE / Editor configs
 .vscode/
 .idea/
