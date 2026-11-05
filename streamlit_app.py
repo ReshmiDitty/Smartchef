@@ -8,6 +8,14 @@ This file deploys the exact SmartChef website in Streamlit with zero changes.
 import os
 import streamlit as st
 import streamlit.components.v1 as components
+
+# Configure Streamlit Cloud secrets if available
+try:
+    if "GROQ_API_KEY" in st.secrets:
+        os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
+except Exception:
+    pass
+
 from app import app
 
 # Configure Streamlit page

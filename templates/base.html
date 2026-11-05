@@ -31,10 +31,14 @@
         <a href="#signature-dishes" class="nav-link">Signature Dishes</a>
         <a href="#all-recipes" class="nav-link">All 24 Recipes</a>
         <a href="#how-it-works" class="nav-link">How It Works</a>
+        <button type="button" class="nav-link nav-link-ai" onclick="ChefApp.openAiDrawer()">✨ Ask AI Chef</button>
       </nav>
 
       <!-- Header Actions -->
       <div class="header-actions">
+        <button type="button" class="btn btn-ai-header btn-sm" onclick="ChefApp.openAiDrawer()">
+          <span>✨ AI Chef</span>
+        </button>
         <div class="engine-badge badge-smart" title="Smart Matching Engine: Active">
           <span class="engine-dot"></span>
           <span class="engine-label">Smart Matcher Active</span>
@@ -57,6 +61,7 @@
       <a href="#signature-dishes" class="mobile-nav-link" onclick="ChefApp.closeMobileMenu()">Signature Dishes</a>
       <a href="#all-recipes" class="mobile-nav-link" onclick="ChefApp.closeMobileMenu()">All 24 Recipes</a>
       <a href="#how-it-works" class="mobile-nav-link" onclick="ChefApp.closeMobileMenu()">How It Works</a>
+      <a href="javascript:void(0)" class="mobile-nav-link mobile-ai-link" onclick="ChefApp.closeMobileMenu(); ChefApp.openAiDrawer()">✨ Ask AI Chef</a>
     </div>
   </header>
 
@@ -121,6 +126,40 @@
           <h4 class="section-title">Step-by-Step Cooking Method</h4>
           <ol class="instructions-steps-list" id="modalStepsList"></ol>
         </div>
+
+        <!-- AI Chef Advice Section Inside Recipe Modal -->
+        <div class="modal-section ai-recipe-section">
+          <div class="ai-section-header">
+            <span class="ai-badge-icon">👨‍🍳</span>
+            <div>
+              <h4 class="section-title mb-0">Ask Chef Smart About This Dish</h4>
+              <p class="ai-section-sub">Powered by Groq AI • Instant cooking tips, spice balancing & pairings</p>
+            </div>
+          </div>
+          
+          <div class="ai-quick-chips">
+            <button type="button" class="ai-prompt-chip" onclick="ChefApp.askModalChef('How can I make this spicier and enhance the rich flavors?')">🌶️ Make it spicier</button>
+            <button type="button" class="ai-prompt-chip" onclick="ChefApp.askModalChef('What are the best side dishes or breads to serve with this?')">🥖 Side pairings</button>
+            <button type="button" class="ai-prompt-chip" onclick="ChefApp.askModalChef('What is the chef secret for the best texture and aroma?')">✨ Texture secrets</button>
+            <button type="button" class="ai-prompt-chip" onclick="ChefApp.askModalChef('How do I store and reheat leftovers properly?')">🍱 Reheating tips</button>
+          </div>
+
+          <div class="ai-modal-input-row">
+            <input type="text" id="modalAiInput" class="form-input" placeholder="Ask Chef Smart anything about this recipe..." onkeydown="if(event.key==='Enter')ChefApp.submitModalChefQuestion()" />
+            <button type="button" id="modalAiSubmitBtn" class="btn btn-primary btn-sm" onclick="ChefApp.submitModalChefQuestion()">
+              <span id="modalAiBtnText">Ask Chef</span>
+              <span id="modalAiBtnSpinner" class="spinner-sm hidden"></span>
+            </button>
+          </div>
+
+          <div class="ai-response-box hidden" id="modalAiResponseBox">
+            <div class="ai-response-header">
+              <span class="ai-chef-avatar">👨‍🍳</span>
+              <strong>Chef Smart's Culinary Advice:</strong>
+            </div>
+            <div class="ai-response-text" id="modalAiResponseText"></div>
+          </div>
+        </div>
       </div>
 
       <div class="modal-footer">
@@ -128,6 +167,52 @@
       </div>
     </div>
   </div>
+
+  <!-- Floating AI Chef Button -->
+  <button class="ai-floating-btn" id="aiFloatingBtn" onclick="ChefApp.toggleAiDrawer()" title="Ask Chef Smart (AI Assistant)">
+    <span class="ai-btn-icon">👨‍🍳</span>
+    <span class="ai-btn-text">Ask AI Chef</span>
+  </button>
+
+  <!-- AI Chef Assistant Drawer -->
+  <div class="ai-drawer-backdrop" id="aiDrawerBackdrop" onclick="ChefApp.closeAiDrawer()"></div>
+  <aside class="ai-drawer" id="aiDrawer">
+    <div class="ai-drawer-header">
+      <div class="ai-drawer-brand">
+        <span class="ai-drawer-avatar">👨‍🍳</span>
+        <div>
+          <h3 class="ai-drawer-title">Chef Smart</h3>
+          <span class="ai-drawer-status"><span class="status-dot"></span> Groq AI Advisor</span>
+        </div>
+      </div>
+      <button class="ai-drawer-close" onclick="ChefApp.closeAiDrawer()" aria-label="Close AI Assistant">&times;</button>
+    </div>
+
+    <div class="ai-drawer-body" id="aiDrawerBody">
+      <div class="ai-chat-bubble ai-bubble-assistant">
+        <p>👋 Hello! I'm <strong>Chef Smart</strong>, your personal AI culinary advisor. Ask me anything about cooking techniques, ingredient substitutions, flavour balancing, or what to cook with your pantry items!</p>
+      </div>
+
+      <div class="ai-quick-suggestions">
+        <span class="suggestions-label">Try asking:</span>
+        <button type="button" class="suggestion-chip" onclick="ChefApp.sendDrawerQuestion('Suggest a delicious dinner I can cook in under 20 minutes')">⚡ 20-min dinner idea</button>
+        <button type="button" class="suggestion-chip" onclick="ChefApp.sendDrawerQuestion('How do I fix a dish that turned out too salty?')">🧂 Rescue oversalted food</button>
+        <button type="button" class="suggestion-chip" onclick="ChefApp.sendDrawerQuestion('What herbs and spices pair best with roasted vegetables?')">🌿 Herb & spice pairings</button>
+      </div>
+    </div>
+
+    <div class="ai-drawer-footer">
+      <form class="ai-drawer-form" onsubmit="ChefApp.handleDrawerFormSubmit(event)">
+        <input type="text" id="aiDrawerInput" class="ai-drawer-input" placeholder="Ask Chef Smart a culinary question..." autocomplete="off" />
+        <button type="submit" id="aiDrawerSendBtn" class="ai-drawer-send-btn" aria-label="Send message">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </form>
+    </div>
+  </aside>
 
   <!-- Toast Notification Container -->
   <div class="toast-container" id="toastContainer"></div>

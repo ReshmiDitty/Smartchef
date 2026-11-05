@@ -50,8 +50,15 @@ The application features a single-page design, responsive across mobile, tablet,
 * Full-bleed cover photo with high-contrast badge overlays.
 * Complete ingredient checklist highlighting what you already have vs. what you need.
 * Numbered, step-by-step cooking instructions with preparation timings.
+* **✨ In-Modal AI Chef Advice:** Ask dish-specific questions (*"Make it spicier"*, *"Best side pairings"*, *"Texture secrets"*, *"Reheating tips"*) and receive instant culinary suggestions directly inside the modal.
 
-### 7. The 4-Step Matching Workflow
+### 7. ✨ Chef Smart – AI Culinary Advisor (Powered by Groq API)
+* **Instant Culinary Consultation:** Click the floating "Ask AI Chef" button or header link to open Chef Smart, an on-demand AI culinary expert.
+* **Pantry Inspiration:** Pick any set of ingredients in your pantry tray and click *"✨ Ask AI Chef For Ideas With These"* to receive customized meal suggestions, cooking methods, and flavor pairings.
+* **Ultra-Fast AI Inference:** Powered by Groq Cloud models (`qwen/qwen3.8-27b` and `openai/gpt-oss-20b`) for lightning-fast responses.
+* **Environment Configuration:** Pre-configured to run out of the box; supports custom API keys via the `GROQ_API_KEY` environment variable or Streamlit Secrets.
+
+### 8. The 4-Step Matching Workflow
 1. **Select Ingredients:** Pick what is currently in your kitchen.
 2. **Pantry Matching:** Real-time evaluation against 24 curated recipe profiles.
 3. **Smart Substitutions:** Automatic inference of acceptable culinary swaps.

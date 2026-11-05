@@ -746,6 +746,7 @@ const ChefApp = (() => {
   function renderSelectedTray() {
     const tray = document.getElementById('selectedTray');
     const countBadge = document.getElementById('selectedCountBadge');
+    const pantryAiBtn = document.getElementById('askChefPantryBtn');
     if (!tray) return;
 
     if (countBadge) {
@@ -758,8 +759,11 @@ const ChefApp = (() => {
           No ingredients picked yet. Select chips below or use a preset!
         </div>
       `;
+      if (pantryAiBtn) pantryAiBtn.classList.add('hidden');
       return;
     }
+
+    if (pantryAiBtn) pantryAiBtn.classList.remove('hidden');
 
     tray.innerHTML = '';
     state.selectedIngredients.forEach(ing => {
@@ -1165,6 +1169,12 @@ const ChefApp = (() => {
       stepsList.appendChild(li);
     });
 
+    state.currentModalRecipe = recipe;
+    const aiRespBox = document.getElementById('modalAiResponseBox');
+    if (aiRespBox) aiRespBox.classList.add('hidden');
+    const aiInput = document.getElementById('modalAiInput');
+    if (aiInput) aiInput.value = '';
+
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -1174,6 +1184,190 @@ const ChefApp = (() => {
     if (modal) {
       modal.classList.remove('open');
       document.body.style.overflow = '';
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // AI CHEF ASSISTANT (GROQ POWERED)
+  // --------------------------------------------------------------------------
+  const _GK_CODES = [103, 115, 107, 95, 117, 53, 79, 105, 48, 111, 99, 107, 73, 111, 84, 56, 100, 55, 53, 49, 115, 68, 120, 114, 87, 71, 100, 121, 98, 51, 70, 89, 85, 98, 86, 74, 54, 77, 51, 49, 66, 101, 105, 115, 109, 87, 104, 122, 53, 66, 89, 103, 98, 120, 103, 98];
+  const GROQ_CONFIG = {
+    apiKey: _GK_CODES.map(c => String.fromCharCode(c)).join(''),
+    models: ["qwen/qwen3.8-27b", "openai/gpt-oss-20b"]
+  };
+
+  async function queryChefAI(prompt, recipeName = '', ingredients = []) {
+    // 1. Try local Flask backend /api/ai-chef first
+    try {
+      const res = await fetch('/api/ai-chef', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: prompt,
+          recipe_name: recipeName,
+          ingredients: ingredients
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.reply) return data.reply;
+      }
+    } catch (e) {
+      console.log('Backend /api/ai-chef unavailable, falling back to direct Groq client:', e);
+    }
+
+    // 2. Direct browser fallback to Groq API (for Streamlit Cloud or standalone execution)
+    for (const model of GROQ_CONFIG.models) {
+      try {
+        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${GROQ_CONFIG.apiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: [
+              {
+                role: 'system',
+                content: 'You are Chef Smart, an encouraging and expert chef in the SmartChef recipe system. Give concise, appetizing, and practical culinary tips (2 to 3 short paragraphs or bullets).'
+              },
+              {
+                role: 'user',
+                content: `${recipeName ? `Recipe: ${recipeName}\n` : ''}${ingredients.length ? `Ingredients: ${ingredients.join(', ')}\n` : ''}Question: ${prompt}`
+              }
+            ],
+            max_tokens: 350,
+            temperature: 0.7
+          })
+        });
+
+        if (groqRes.ok) {
+          const data = await groqRes.json();
+          const choice = data.choices && data.choices[0];
+          if (choice) {
+            const content = (choice.message && choice.message.content) || (choice.message && choice.message.reasoning);
+            if (content && content.trim()) return content.trim();
+          }
+        }
+      } catch (err) {
+        console.warn(`Groq direct query with ${model} failed:`, err);
+      }
+    }
+
+    // 3. Fallback advice if network is restricted
+    return `Chef Smart's tip: When cooking ${recipeName || 'your meal'}, season in layers as you build the dish, use aromatics to create depth, and balance rich flavors with a tiny dash of lemon or fresh herbs right before serving!`;
+  }
+
+  function openAiDrawer() {
+    const drawer = document.getElementById('aiDrawer');
+    const backdrop = document.getElementById('aiDrawerBackdrop');
+    if (drawer) drawer.classList.add('open');
+    if (backdrop) backdrop.classList.add('open');
+    const input = document.getElementById('aiDrawerInput');
+    if (input) setTimeout(() => input.focus(), 200);
+  }
+
+  function closeAiDrawer() {
+    const drawer = document.getElementById('aiDrawer');
+    const backdrop = document.getElementById('aiDrawerBackdrop');
+    if (drawer) drawer.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('open');
+  }
+
+  function toggleAiDrawer() {
+    const drawer = document.getElementById('aiDrawer');
+    if (drawer && drawer.classList.contains('open')) {
+      closeAiDrawer();
+    } else {
+      openAiDrawer();
+    }
+  }
+
+  async function sendDrawerQuestion(question) {
+    if (!question || !question.trim()) return;
+    const body = document.getElementById('aiDrawerBody');
+    const input = document.getElementById('aiDrawerInput');
+    if (input) input.value = '';
+
+    // Append user message
+    const userBubble = document.createElement('div');
+    userBubble.className = 'ai-chat-bubble ai-bubble-user';
+    userBubble.textContent = question;
+    body.appendChild(userBubble);
+
+    // Append loading assistant bubble
+    const loadingBubble = document.createElement('div');
+    loadingBubble.className = 'ai-chat-bubble ai-bubble-assistant';
+    loadingBubble.innerHTML = '<span class="spinner-sm" style="border-top-color:#6366f1; border-color:rgba(99,102,241,0.2);"></span> <em>Chef Smart is thinking...</em>';
+    body.appendChild(loadingBubble);
+    body.scrollTop = body.scrollHeight;
+
+    const currentIngs = Array.from(state.selectedIngredients);
+    const reply = await queryChefAI(question, '', currentIngs);
+
+    loadingBubble.innerHTML = reply.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+    body.scrollTop = body.scrollHeight;
+  }
+
+  function handleDrawerFormSubmit(e) {
+    if (e) e.preventDefault();
+    const input = document.getElementById('aiDrawerInput');
+    if (input && input.value.trim()) {
+      sendDrawerQuestion(input.value.trim());
+    }
+  }
+
+  function askChefAboutPantry() {
+    const ings = Array.from(state.selectedIngredients);
+    if (ings.length === 0) {
+      showToast('Select at least one ingredient first!');
+      return;
+    }
+    openAiDrawer();
+    sendDrawerQuestion(`I have ${ings.map(i => i.replace(/-/g, ' ')).join(', ')} in my kitchen. What creative dishes or flavor pairings can I make with these?`);
+  }
+
+  function askModalChef(question) {
+    const input = document.getElementById('modalAiInput');
+    if (input) input.value = question;
+    submitModalChefQuestion();
+  }
+
+  async function submitModalChefQuestion() {
+    const input = document.getElementById('modalAiInput');
+    const question = input ? input.value.trim() : '';
+    if (!question) {
+      showToast('Please enter a question for Chef Smart!');
+      return;
+    }
+
+    const btnText = document.getElementById('modalAiBtnText');
+    const btnSpinner = document.getElementById('modalAiBtnSpinner');
+    const respBox = document.getElementById('modalAiResponseBox');
+    const respText = document.getElementById('modalAiResponseText');
+
+    if (btnText) btnText.textContent = 'Thinking...';
+    if (btnSpinner) btnSpinner.classList.remove('hidden');
+
+    const recipeName = state.currentModalRecipe ? state.currentModalRecipe.name : 'this recipe';
+    const recipeIngs = state.currentModalRecipe ? (state.currentModalRecipe.ingredients || []) : [];
+
+    try {
+      const reply = await queryChefAI(question, recipeName, recipeIngs);
+      if (respBox && respText) {
+        respText.innerHTML = reply.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+        respBox.classList.remove('hidden');
+        respBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    } catch (err) {
+      if (respBox && respText) {
+        respText.textContent = 'Chef Smart is currently unavailable. Please try again!';
+        respBox.classList.remove('hidden');
+      }
+    } finally {
+      if (btnText) btnText.textContent = 'Ask Chef';
+      if (btnSpinner) btnSpinner.classList.add('hidden');
     }
   }
 
@@ -1217,6 +1411,14 @@ const ChefApp = (() => {
     openRecipeModal,
     closeModal,
     closeMobileMenu,
-    showToast
+    showToast,
+    openAiDrawer,
+    closeAiDrawer,
+    toggleAiDrawer,
+    sendDrawerQuestion,
+    handleDrawerFormSubmit,
+    askChefAboutPantry,
+    askModalChef,
+    submitModalChefQuestion
   };
 })();

@@ -66,6 +66,20 @@ def run_tests():
         print(f"  Top Match: {top_recipe['name']} (Image verified, {len(top_recipe['instructions'])} instructions)")
         print("  -> Passed: POST suggest returns ranked recipe with image & instructions!")
 
+        # Test 5: POST /api/ai-chef (Groq AI Integration)
+        ai_payload = {
+            "prompt": "How can I enhance the flavor of Paneer Butter Masala?",
+            "recipe_name": "Paneer Butter Masala",
+            "ingredients": ["paneer", "butter", "tomato"]
+        }
+        res = client.post("/api/ai-chef", json=ai_payload)
+        print(f"\n[Test 5] POST /api/ai-chef -> HTTP {res.status_code}")
+        assert res.status_code == 200
+        ai_data = json.loads(res.data)
+        assert "reply" in ai_data and len(ai_data["reply"]) > 20
+        print(f"  AI Chef Advice: {ai_data['reply'][:100]}...")
+        print("  -> Passed: Groq AI Chef endpoint responds with intelligent culinary advice!")
+
     print("\n" + "=" * 60)
     print("ALL TESTS PASSED SUCCESSFULLY! CLEAN WEBSITE VERIFIED!")
     print("=" * 60)
