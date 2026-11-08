@@ -32,7 +32,7 @@ def print_header():
     print("  Course : Fundamentals of Artificial Intelligence (FAI)")
     print("=" * BANNER_WIDTH)
     print("  This system uses Symbolic AI & Pure List Processing (CAR / CDR / CONS)")
-    print("  to match your pantry ingredients against 24 curated global recipes.")
+    print(f"  to match your pantry ingredients against {len(engine_fallback.RECIPES)} curated and community recipes.")
     print("=" * BANNER_WIDTH + "\n")
 
 def ask_ingredients():

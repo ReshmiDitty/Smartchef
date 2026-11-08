@@ -629,12 +629,33 @@ const ChefApp = (() => {
   };
 
   function init() {
+    loadLocalCustomRecipes();
     initMobileNav();
     initModalHandlers();
     initCustomIngredientInput();
     initCategoryAccordions();
     initSmoothScrolling();
     loadCatalogIntoMap();
+    syncStoredCustomCards();
+    updateRecipeCountBadges();
+  }
+
+  function loadLocalCustomRecipes() {
+    try {
+      const stored = localStorage.getItem('smartchef_custom_recipes');
+      if (stored) {
+        const list = JSON.parse(stored);
+        if (Array.isArray(list)) {
+          list.forEach(item => {
+            if (item && item.id && !RECIPES_DATA.some(r => r.id === item.id)) {
+              RECIPES_DATA.push(item);
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Could not read custom recipes from localStorage:', e);
+    }
   }
 
   function initSmoothScrolling() {
@@ -694,6 +715,235 @@ const ChefApp = (() => {
           closeModal();
         }
       });
+    }
+
+    const addModal = document.getElementById('addRecipeModal');
+    if (addModal) {
+      addModal.addEventListener('click', (e) => {
+        if (e.target === addModal) closeAddRecipeModal();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && addModal.classList.contains('open')) {
+          closeAddRecipeModal();
+        }
+      });
+    }
+  }
+
+  function openAddRecipeModal() {
+    const modal = document.getElementById('addRecipeModal');
+    if (modal) {
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      const nameInput = document.getElementById('addRecipeName');
+      if (nameInput) setTimeout(() => nameInput.focus(), 100);
+    }
+  }
+
+  function closeAddRecipeModal() {
+    const modal = document.getElementById('addRecipeModal');
+    if (modal) {
+      modal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  }
+
+  function updateRecipeCountBadges() {
+    const count = RECIPES_DATA.length;
+    const heroBadge = document.getElementById('heroRecipeCount');
+    if (heroBadge) heroBadge.textContent = count;
+    const headerBadge = document.getElementById('recipesTotalHeaderCount');
+    if (headerBadge) headerBadge.textContent = count;
+  }
+
+  function appendRecipeCardToCatalog(recipe) {
+    const grid = document.getElementById('recipesRichGrid');
+    if (!grid) return;
+
+    const existingCard = grid.querySelector(`[data-recipe-id="${recipe.id}"]`);
+    if (existingCard) existingCard.remove();
+
+    const card = document.createElement('div');
+    card.className = 'recipe-rich-card';
+    card.setAttribute('data-recipe-id', recipe.id);
+    card.onclick = () => openRecipeModalById(recipe.id);
+
+    const chips = (recipe.ingredients || []).slice(0, 7)
+      .map(i => `<span class="rich-ing-chip">${i.replace(/-/g, ' ')}</span>`)
+      .join('');
+    const moreChip = (recipe.ingredients || []).length > 7
+      ? `<span class="rich-ing-chip chip-more">+${recipe.ingredients.length - 7} more</span>`
+      : '';
+
+    card.innerHTML = `
+      <div class="recipe-rich-img-wrap">
+        <img src="${recipe.image}" alt="${recipe.name}" class="recipe-rich-img" loading="lazy" />
+        <div class="recipe-rich-badge-row">
+          <span class="diet-badge diet-${recipe.diet}">
+            ${recipe.diet === 'veg' ? '🟢 Veg' : '🔴 Non-Veg'}
+          </span>
+          <span class="time-pill-dark">⏱️ ${recipe.time}m</span>
+        </div>
+      </div>
+      <div class="recipe-rich-body">
+        <div class="recipe-rich-meta">
+          <span class="cuisine-tag-sm">${recipe.cuisine || 'Custom'}</span>
+          <span class="ing-count-sm">🥣 ${(recipe.ingredients || []).length} ingredients</span>
+        </div>
+        <h3 class="recipe-rich-title">${recipe.name}</h3>
+        <p class="recipe-rich-desc">${recipe.description || ''}</p>
+        <div class="recipe-rich-ingredients">
+          <div class="rich-chips-container">
+            ${chips}
+            ${moreChip}
+          </div>
+        </div>
+        <div class="recipe-card-action-bar">
+          <span class="view-recipe-link">View Recipe Details &rarr;</span>
+        </div>
+      </div>
+    `;
+
+    const ctaCard = grid.querySelector('.add-custom-card-cta');
+    if (ctaCard && ctaCard.nextSibling) {
+      grid.insertBefore(card, ctaCard.nextSibling);
+    } else {
+      grid.appendChild(card);
+    }
+  }
+
+  function syncStoredCustomCards() {
+    try {
+      const stored = localStorage.getItem('smartchef_custom_recipes');
+      if (stored) {
+        const list = JSON.parse(stored);
+        if (Array.isArray(list)) {
+          list.forEach(r => appendRecipeCardToCatalog(r));
+        }
+      }
+    } catch (e) {
+      console.warn('Could not sync custom recipe cards:', e);
+    }
+  }
+
+  async function handleCreateRecipe(e) {
+    if (e) e.preventDefault();
+
+    const nameEl = document.getElementById('addRecipeName');
+    const cuisineEl = document.getElementById('addRecipeCuisine');
+    const dietEl = document.querySelector('input[name="addRecipeDiet"]:checked');
+    const timeEl = document.getElementById('addRecipeTime');
+    const imageEl = document.getElementById('addRecipeImage');
+    const ingsEl = document.getElementById('addRecipeIngredients');
+    const descEl = document.getElementById('addRecipeDescription');
+    const instEl = document.getElementById('addRecipeInstructions');
+
+    const name = nameEl ? nameEl.value.trim() : '';
+    const cuisine = cuisineEl ? cuisineEl.value.trim() : 'Fusion';
+    const diet = dietEl ? dietEl.value : 'veg';
+    const time = timeEl ? parseInt(timeEl.value, 10) : 25;
+    let image = imageEl ? imageEl.value.trim() : '';
+    const rawIngs = ingsEl ? ingsEl.value.trim() : '';
+    const description = descEl ? descEl.value.trim() : '';
+    const rawInst = instEl ? instEl.value.trim() : '';
+
+    if (!name) {
+      showToast('Please provide a dish name.');
+      return;
+    }
+
+    if (!rawIngs) {
+      showToast('Please provide at least one ingredient.');
+      return;
+    }
+
+    const ingredients = rawIngs
+      .split(',')
+      .map(i => i.trim().toLowerCase().replace(/\s+/g, '-'))
+      .filter(i => i.length > 0);
+
+    if (ingredients.length === 0) {
+      showToast('Please provide valid ingredients.');
+      return;
+    }
+
+    const instructions = rawInst
+      .split('\n')
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
+    if (!image) {
+      image = diet === 'veg'
+        ? 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80'
+        : 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80';
+    }
+
+    const recId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `custom-${Date.now()}`;
+
+    const newRecipe = {
+      id: recId,
+      name: name,
+      cuisine: cuisine,
+      diet: diet,
+      time: time || 25,
+      image: image,
+      ingredients: ingredients,
+      description: description || `Delicious homemade ${name} prepared with fresh ingredients.`,
+      instructions: instructions.length > 0 ? instructions : [
+        'Prepare and measure all ingredients according to the checklist.',
+        'Sauté aromatics and combine main components over medium heat.',
+        'Simmer until flavors are rich and fully melded, then garnish and serve hot.'
+      ]
+    };
+
+    // 1. Post to backend Flask endpoint
+    try {
+      await fetch('/api/recipes/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newRecipe)
+      });
+    } catch (err) {
+      console.warn('Backend API add failed or running offline in iframe:', err);
+    }
+
+    // 2. Client-side persistence in localStorage
+    try {
+      let localList = [];
+      const stored = localStorage.getItem('smartchef_custom_recipes');
+      if (stored) {
+        localList = JSON.parse(stored);
+      }
+      localList = localList.filter(r => r.id !== recId);
+      localList.push(newRecipe);
+      localStorage.setItem('smartchef_custom_recipes', JSON.stringify(localList));
+    } catch (e) {
+      console.warn('Could not write to localStorage:', e);
+    }
+
+    // 3. Update in-memory lists
+    const existingIndex = RECIPES_DATA.findIndex(r => r.id === recId);
+    if (existingIndex >= 0) {
+      RECIPES_DATA[existingIndex] = newRecipe;
+    } else {
+      RECIPES_DATA.push(newRecipe);
+    }
+    state.allRecipesMap.set(recId, newRecipe);
+
+    // 4. Update UI counts and append to catalog
+    updateRecipeCountBadges();
+    appendRecipeCardToCatalog(newRecipe);
+
+    // 5. Reset form & close dialog
+    const form = document.getElementById('addRecipeForm');
+    if (form) form.reset();
+    closeAddRecipeModal();
+
+    showToast(`🎉 "${name}" added successfully to SmartChef!`);
+
+    // 6. Trigger search refresh if pantry has items selected
+    if (state.selectedIngredients.size > 0) {
+      triggerAutoSearch();
     }
   }
 
@@ -1457,6 +1707,9 @@ const ChefApp = (() => {
     handleDrawerFormSubmit,
     askChefAboutPantry,
     askModalChef,
-    submitModalChefQuestion
+    submitModalChefQuestion,
+    openAddRecipeModal,
+    closeAddRecipeModal,
+    handleCreateRecipe
   };
 })();

@@ -287,6 +287,31 @@ def api_recipes():
         "recipes": evaluated
     })
 
+@app.route("/api/recipes/add", methods=["POST"])
+def api_add_recipe():
+    """Allows users to submit their own custom dish to the knowledge base."""
+    data = request.get_json(force=True, silent=True) or {}
+    name = (data.get("name") or "").strip()
+    ingredients = data.get("ingredients") or []
+    
+    if not name:
+        return jsonify({"status": "error", "message": "Dish name is required."}), 400
+    if not ingredients:
+        return jsonify({"status": "error", "message": "At least one ingredient is required."}), 400
+        
+    try:
+        new_rec_list = engine_fallback.save_custom_recipe(data)
+        evaluated = engine_fallback.evaluate_recipe(new_rec_list, [], engine_fallback.SUBSTITUTION_RULES)
+        return jsonify({
+            "status": "success",
+            "message": f"Recipe '{name}' added successfully!",
+            "recipe": evaluated,
+            "total_recipes": len(engine_fallback.RECIPES)
+        })
+    except Exception as e:
+        app.logger.error(f"Error saving custom recipe: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route("/api/ai-chef", methods=["POST"])
 def api_ai_chef():
     """AI culinary consultant powered by Groq API."""

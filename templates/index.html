@@ -37,8 +37,8 @@
       <!-- Quick Metrics Strip -->
       <div class="hero-stats-strip">
         <div class="stat-item">
-          <div class="stat-number">24</div>
-          <div class="stat-label">Curated Recipes</div>
+          <div class="stat-number" id="heroRecipeCount">{{ total_recipes_count }}</div>
+          <div class="stat-label">Curated & Added</div>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
@@ -353,15 +353,29 @@
   <div class="section-container">
     <div class="section-header-flex">
       <div>
-        <h2 class="section-heading">All 24 Curated Recipes</h2>
+        <h2 class="section-heading">All <span id="recipesTotalHeaderCount">{{ total_recipes_count }}</span> Curated Recipes & Community Dishes</h2>
         <p class="section-subheading">
           Click any recipe card below to view its complete photo, rich ingredient breakdown, and detailed cooking steps.
         </p>
       </div>
-      <a href="#finder" class="btn btn-primary">Try Recipe Finder &uarr;</a>
+      <div class="header-action-group">
+        <button type="button" class="btn btn-accent" onclick="ChefApp.openAddRecipeModal()">
+          <span>➕ Add Your Dish</span>
+        </button>
+        <a href="#finder" class="btn btn-primary">Try Recipe Finder &uarr;</a>
+      </div>
     </div>
 
-    <div class="recipes-rich-grid">
+    <div class="recipes-rich-grid" id="recipesRichGrid">
+      <!-- Add Your Own Recipe Card CTA in Grid -->
+      <div class="recipe-rich-card add-custom-card-cta" onclick="ChefApp.openAddRecipeModal()">
+        <div class="add-custom-card-inner">
+          <div class="add-custom-icon">👨‍🍳</div>
+          <h3 class="add-custom-title">Add Your Signature Dish</h3>
+          <p class="add-custom-desc">Have a family specialty or secret recipe? Add it to SmartChef's knowledge base so it can be matched with pantry ingredients.</p>
+          <span class="btn btn-sm btn-outline-accent">➕ Add Recipe Now &rarr;</span>
+        </div>
+      </div>
       {% for recipe in featured_recipes %}
       <div class="recipe-rich-card" onclick="ChefApp.openRecipeModalById('{{ recipe.id }}')">
         <div class="recipe-rich-img-wrap">

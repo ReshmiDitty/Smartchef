@@ -11,6 +11,8 @@ matching, relative complement (missing ingredients), and rule-based substitution
 =============================================================================
 """
 
+import os
+import json
 from typing import List, Dict, Any, Tuple, Optional
 
 # ---------------------------------------------------------------------------
@@ -46,12 +48,12 @@ def member(item: Any, lst: list) -> bool:
     return member(item, cdr(lst))
 
 # ---------------------------------------------------------------------------
-# 2. ENRICHED KNOWLEDGE BASE: 24 Curated Recipes with Images & Rich Ingredients
+# 2. ENRICHED KNOWLEDGE BASE: Base Curated Recipes with Images & Rich Ingredients
 # ---------------------------------------------------------------------------
 # Schema:
 # [id, name, ingredients_list, diet, cooking_time, cuisine, image_url, description, instructions]
 
-RECIPES: List[list] = [
+BASE_RECIPES: List[list] = [
     [
         "paneer-butter-masala",
         "Paneer Butter Masala",
@@ -462,6 +464,112 @@ RECIPES: List[list] = [
     ]
 ]
 
+# ---------------------------------------------------------------------------
+# DYNAMIC KNOWLEDGE BASE & USER CONTRIBUTIONS
+# ---------------------------------------------------------------------------
+CUSTOM_RECIPES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "custom_recipes.json")
+
+def load_custom_recipes() -> List[list]:
+    """Loads user-added recipes from persistent JSON file and converts to list format."""
+    if not os.path.exists(CUSTOM_RECIPES_FILE):
+        return []
+    try:
+        with open(CUSTOM_RECIPES_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            custom_list = []
+            for item in data:
+                custom_list.append([
+                    item.get("id"),
+                    item.get("name"),
+                    item.get("ingredients", []),
+                    item.get("diet", "veg"),
+                    int(item.get("time", 30)),
+                    item.get("cuisine", "Custom"),
+                    item.get("image", "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80"),
+                    item.get("description", ""),
+                    item.get("instructions", [])
+                ])
+            return custom_list
+    except Exception:
+        return []
+
+# Dynamic full recipe list (Base Curated + User Contributed)
+RECIPES: List[list] = list(BASE_RECIPES) + load_custom_recipes()
+
+def reload_all_recipes() -> List[list]:
+    """Reloads recipes combining base curated recipes and custom user additions."""
+    global RECIPES
+    RECIPES = list(BASE_RECIPES) + load_custom_recipes()
+    return RECIPES
+
+def save_custom_recipe(recipe_dict: dict) -> list:
+    """Validates and appends a new user recipe to custom_recipes.json, returning the recipe list."""
+    name = str(recipe_dict.get("name", "Custom Recipe")).strip()
+    raw_id = recipe_dict.get("id") or name.lower().replace(" ", "-")
+    rec_id = "".join(c for c in raw_id if c.isalnum() or c in "-_")
+    
+    # Process ingredients
+    raw_ings = recipe_dict.get("ingredients", [])
+    if isinstance(raw_ings, str):
+        ings = [i.strip().lower().replace(" ", "-") for i in raw_ings.split(",") if i.strip()]
+    else:
+        ings = [str(i).strip().lower().replace(" ", "-") for i in raw_ings if str(i).strip()]
+        
+    diet = "non-veg" if str(recipe_dict.get("diet")).lower() in ["non-veg", "nonveg", "non_veg"] else "veg"
+    time_val = int(recipe_dict.get("time") or 30)
+    cuisine = str(recipe_dict.get("cuisine") or "Global").strip()
+    
+    # Fallback image if blank
+    image = str(recipe_dict.get("image") or "").strip()
+    if not image or not image.startswith("http"):
+        if diet == "veg":
+            image = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80"
+        else:
+            image = "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80"
+            
+    desc = str(recipe_dict.get("description") or f"A delicious creation of {name} prepared with fresh ingredients.").strip()
+    
+    raw_instructions = recipe_dict.get("instructions", [])
+    if isinstance(raw_instructions, str):
+        instructions = [s.strip() for s in raw_instructions.split("\n") if s.strip()]
+    else:
+        instructions = [str(s).strip() for s in raw_instructions if str(s).strip()]
+    if not instructions:
+        instructions = [
+            "Prepare, clean, and measure all fresh ingredients according to list.",
+            "Sauté aromatics and combine with main components on medium heat.",
+            "Simmer until flavors are rich and fully melded, then garnish and serve hot."
+        ]
+        
+    recipe_entry = {
+        "id": rec_id,
+        "name": name,
+        "ingredients": ings,
+        "diet": diet,
+        "time": time_val,
+        "cuisine": cuisine,
+        "image": image,
+        "description": desc,
+        "instructions": instructions
+    }
+    
+    existing = []
+    if os.path.exists(CUSTOM_RECIPES_FILE):
+        try:
+            with open(CUSTOM_RECIPES_FILE, "r", encoding="utf-8") as f:
+                existing = json.load(f)
+        except Exception:
+            existing = []
+            
+    existing = [e for e in existing if e.get("id") != rec_id]
+    existing.append(recipe_entry)
+    
+    with open(CUSTOM_RECIPES_FILE, "w", encoding="utf-8") as f:
+        json.dump(existing, f, indent=2)
+        
+    reload_all_recipes()
+    return [rec_id, name, ings, diet, time_val, cuisine, image, desc, instructions]
+
 # Substitution Rules: (substitute_symbol, standard_recipe_ingredient_symbol)
 SUBSTITUTION_RULES: List[Tuple[str, str]] = [
     ("olive-oil", "butter"),
@@ -662,7 +770,7 @@ def evaluate_recipe(recipe: list, user_ingredients: list, sub_list: list) -> Dic
     }
 
 def suggest_recipes(
-    recipes: list = RECIPES,
+    recipes: list = None,
     user_ingredients: list = None,
     diet: str = "all",
     max_time: int = 120,
@@ -674,6 +782,8 @@ def suggest_recipes(
     Applies filters, computes list-matching scores, and sorts ranked results.
     Strictly filters out recipes that do not contain user's selected ingredients.
     """
+    if recipes is None:
+        recipes = RECIPES
     if user_ingredients is None:
         user_ingredients = []
     
@@ -720,8 +830,10 @@ def suggest_recipes(
         "results": ranked
     }
 
-def get_all_ingredients(recipes: list = RECIPES) -> List[str]:
+def get_all_ingredients(recipes: list = None) -> List[str]:
     """Extracts all unique ingredients sorted alphabetically."""
+    if recipes is None:
+        recipes = RECIPES
     all_ings = set()
     for r in recipes:
         for ing in recipe_ingredients(r):

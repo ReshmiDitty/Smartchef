@@ -33,20 +33,20 @@ def run_tests():
         print(f"\n[Test 2] GET /api/status -> HTTP {res.status_code}")
         assert res.status_code == 200, "Status API failed"
         status_data = json.loads(res.data)
-        assert status_data["recipes_count"] == 24
-        print("  -> Passed: Status API reports 24 recipes!")
+        assert status_data["recipes_count"] >= 24
+        print(f"  -> Passed: Status API reports {status_data['recipes_count']} recipes (>= 24)!")
 
         # Test 3: GET /api/recipes
         res = client.get("/api/recipes")
         print(f"\n[Test 3] GET /api/recipes -> HTTP {res.status_code}")
         assert res.status_code == 200
         recs_data = json.loads(res.data)
-        assert recs_data["total"] == 24
+        assert recs_data["total"] >= 24
         sample_r = recs_data["recipes"][0]
         assert "image" in sample_r and sample_r["image"].startswith("http")
         assert len(sample_r["ingredients"]) >= 8
         print(f"  Sample Recipe: {sample_r['name']} ({len(sample_r['ingredients'])} ingredients, image verified)")
-        print("  -> Passed: All 24 recipes contain images and rich ingredient lists!")
+        print("  -> Passed: Base curated and custom recipes contain images and rich ingredient lists!")
 
         # Test 4: POST /api/suggest
         payload = {
@@ -99,6 +99,46 @@ def run_tests():
             assert r["score"] > 0
         print(f"  Match Result: {data6['results'][0]['name']} (contains {data6['results'][0]['matched_ingredients']})")
         print("  -> Passed: Dishes without user ingredients are strictly excluded from suggestions!")
+
+        # Test 7: POST /api/recipes/add (Custom User Recipe Feature)
+        custom_payload = {
+            "name": "Truffle Mushroom Fettuccine",
+            "cuisine": "Italian",
+            "diet": "veg",
+            "time": 20,
+            "ingredients": "pasta, mushroom, garlic, butter, parmesan, cream",
+            "description": "Luxurious ribbon pasta tossed in rich garlic cream, seared mushrooms, and fresh parmesan.",
+            "instructions": "1. Boil fettuccine until al dente.\n2. Sauté mushrooms in garlic butter.\n3. Toss pasta in heavy cream and parmesan."
+        }
+        res = client.post("/api/recipes/add", json=custom_payload)
+        print(f"\n[Test 7] POST /api/recipes/add -> HTTP {res.status_code}")
+        assert res.status_code == 200
+        add_data = json.loads(res.data)
+        assert add_data["status"] == "success"
+        assert add_data["recipe"]["name"] == "Truffle Mushroom Fettuccine"
+        assert add_data["total_recipes"] >= 25
+        print(f"  -> Added custom dish: {add_data['recipe']['name']} (Total recipes now: {add_data['total_recipes']})")
+
+        # Verify custom dish is indexed and matched by suggestion engine
+        match_custom_payload = {
+            "ingredients": ["pasta", "mushroom", "parmesan"],
+            "diet": "veg",
+            "max_time": 60,
+            "sort_by": "score"
+        }
+        res = client.post("/api/suggest", json=match_custom_payload)
+        assert res.status_code == 200
+        match_data = json.loads(res.data)
+        matched_ids = [r["id"] for r in match_data["results"]]
+        assert "truffle-mushroom-fettuccine" in matched_ids
+        print("  -> Passed: User custom recipe participates in list processing match engine!")
+
+        # Clean up test dish from storage
+        import engine_fallback
+        with open("custom_recipes.json", "w", encoding="utf-8") as f:
+            f.write("[]\n")
+        engine_fallback.reload_all_recipes()
+        print("  -> Cleaned up custom recipes test storage.")
 
     print("\n" + "=" * 60)
     print("ALL TESTS PASSED SUCCESSFULLY! CLEAN WEBSITE VERIFIED!")
