@@ -337,4 +337,28 @@ def api_ai_chef():
         })
 
 if __name__ == "__main__":
+    # Ensure clean UTF-8 printing on Windows cmd / PowerShell without charmap errors
+    if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+    banner = "=" * 74
+    print("\n" + banner)
+    print("  [SMARTCHEF] RECIPE SUGGESTION SYSTEM USING LIST PROCESSING")
+    print("  Topic : Fundamentals of Artificial Intelligence (FAI)")
+    print(banner)
+    print("  * Core AI Paradigm : Symbolic Knowledge Representation & List Processing")
+    print("  * Knowledge Base   : 24 Curated Recipes (Indian & Global Cuisines)")
+    print("  * Expert Rules     : 14 Smart Ingredient Substitution Association Rules")
+    print(f"  * Active Engine    : {get_active_engine_name()}")
+    print("  * AI Culinary Guru : Chef Smart (Groq Cloud LLM Active)")
+    print(banner)
+    print("  >>> SMARTCHEF WEBSITE IS LIVE AND READY! <<<")
+    print("  [+] Primary Web Link : http://127.0.0.1:5000")
+    print("  [+] Alternative Link : http://localhost:5000")
+    print("  (Tip: Hold Ctrl and click the link above in VS Code to open)")
+    print(banner + "\n")
+
     app.run(host="127.0.0.1", port=5000, debug=True)

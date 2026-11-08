@@ -71,6 +71,9 @@ The application features a single-page design, responsive across mobile, tablet,
 ```
 Smartchef/
 │
+├── main.py                     # Primary VS Code entry point
+│                               # Prints topic overview, tests list engine, outputs live website link.
+│
 ├── app.py                      # Flask web application & REST API microservice
 │                               # Handles routing, JSON API endpoints, and template rendering.
 │
@@ -162,3 +165,25 @@ The knowledge base contains 24 diverse recipes, each with 8 to 12 realistic culi
 | **Gourmet Cheeseburger Deluxe** | American | 🔴 Non-Veg | 20 mins | Seasoned patty, brioche bun, aged cheddar, lettuce, tomato, pickles |
 | **Pan-Seared Salmon** | Continental | 🔴 Non-Veg | 20 mins | Fresh salmon fillet, lemon herb butter, smashed garlic, rosemary |
 | **Japanese Chicken Katsu Curry** | Japanese | 🔴 Non-Veg | 40 mins | Panko-crusted chicken cutlet, Japanese curry sauce, short-grain rice |
+
+---
+
+## 🚀 How to Run in VS Code
+
+1. **Install Dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Run in VS Code:**
+   Open `main.py` in VS Code and click the **Run / Play** button, or execute in terminal:
+   ```bash
+   python main.py
+   ```
+
+3. **Output in Terminal:**
+   Running `main.py` will print:
+   - Topic overview and list-processing reasoning architecture.
+   - Quick live test result of the recipe suggestion engine.
+   - Clickable website link: **`http://127.0.0.1:5000`**
+   - Automatically opens the website in your default browser!
