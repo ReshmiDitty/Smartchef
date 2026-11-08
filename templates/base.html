@@ -231,11 +231,28 @@
             </div>
           </div>
 
-          <!-- Photo URL -->
+          <!-- Photo File Upload or URL -->
           <div class="form-field">
-            <label class="form-label" for="addRecipeImage">Photo URL (Optional)</label>
-            <input type="url" id="addRecipeImage" class="form-input" placeholder="https://images.unsplash.com/... (leave blank for appetizing auto photo)" />
-            <span class="form-field-hint">Leave blank and SmartChef will automatically assign a delicious food photo based on your dish.</span>
+            <label class="form-label">Dish Photo (Upload Image or Paste URL)</label>
+            <div class="photo-upload-container">
+              <div class="photo-file-dropzone" id="photoDropzone" onclick="document.getElementById('addRecipeFile').click()">
+                <input type="file" id="addRecipeFile" accept="image/*" style="display: none;" onchange="ChefApp.handlePhotoFileSelect(event)" />
+                <div class="photo-upload-placeholder" id="photoUploadPlaceholder">
+                  <span class="upload-icon">📷</span>
+                  <div class="upload-text-col">
+                    <span class="upload-prompt"><strong>Click to upload photo</strong> from your computer / phone</span>
+                    <span class="upload-sub">Supports JPG, PNG, WEBP</span>
+                  </div>
+                </div>
+                <div class="photo-preview-wrap hidden" id="photoPreviewWrap">
+                  <img id="photoPreviewImg" src="" alt="Dish Preview" class="photo-preview-thumbnail" />
+                  <button type="button" class="btn-remove-photo" onclick="ChefApp.clearUploadedPhoto(event)">&times; Remove Photo</button>
+                </div>
+              </div>
+              <div class="photo-or-divider"><span>OR</span></div>
+              <input type="url" id="addRecipeImage" class="form-input" placeholder="Paste an image web URL (https://...)" oninput="ChefApp.handlePhotoUrlInput(event)" />
+            </div>
+            <span class="form-field-hint">Upload a photo from your device, paste an image link, or leave blank for automatic food photo.</span>
           </div>
 
           <!-- Ingredients List -->

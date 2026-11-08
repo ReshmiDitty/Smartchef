@@ -577,7 +577,8 @@ const ChefApp = (() => {
     sortBy: 'score',
     isLoading: false,
     currentResults: [],
-    allRecipesMap: new Map()
+    allRecipesMap: new Map(),
+    uploadedPhotoDataUrl: null
   };
 
   const PRESETS = {
@@ -730,7 +731,53 @@ const ChefApp = (() => {
     }
   }
 
+  function handlePhotoFileSelect(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file (JPG, PNG, WEBP).');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      state.uploadedPhotoDataUrl = evt.target.result;
+      const previewImg = document.getElementById('photoPreviewImg');
+      const previewWrap = document.getElementById('photoPreviewWrap');
+      const placeholder = document.getElementById('photoUploadPlaceholder');
+      const urlInput = document.getElementById('addRecipeImage');
+
+      if (previewImg) previewImg.src = evt.target.result;
+      if (previewWrap) previewWrap.classList.remove('hidden');
+      if (placeholder) placeholder.classList.add('hidden');
+      if (urlInput) urlInput.value = '';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearUploadedPhoto(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    state.uploadedPhotoDataUrl = null;
+    const fileInput = document.getElementById('addRecipeFile');
+    if (fileInput) fileInput.value = '';
+    const previewWrap = document.getElementById('photoPreviewWrap');
+    const placeholder = document.getElementById('photoUploadPlaceholder');
+    if (previewWrap) previewWrap.classList.add('hidden');
+    if (placeholder) placeholder.classList.remove('hidden');
+  }
+
+  function handlePhotoUrlInput(e) {
+    if (e && e.target && e.target.value.trim()) {
+      clearUploadedPhoto();
+    }
+  }
+
   function openAddRecipeModal() {
+    clearUploadedPhoto();
     const modal = document.getElementById('addRecipeModal');
     if (modal) {
       modal.classList.add('open');
@@ -741,6 +788,7 @@ const ChefApp = (() => {
   }
 
   function closeAddRecipeModal() {
+    clearUploadedPhoto();
     const modal = document.getElementById('addRecipeModal');
     if (modal) {
       modal.classList.remove('open');
@@ -842,7 +890,7 @@ const ChefApp = (() => {
     const cuisine = cuisineEl ? cuisineEl.value.trim() : 'Fusion';
     const diet = dietEl ? dietEl.value : 'veg';
     const time = timeEl ? parseInt(timeEl.value, 10) : 25;
-    let image = imageEl ? imageEl.value.trim() : '';
+    let image = state.uploadedPhotoDataUrl || (imageEl ? imageEl.value.trim() : '');
     const rawIngs = ingsEl ? ingsEl.value.trim() : '';
     const description = descEl ? descEl.value.trim() : '';
     const rawInst = instEl ? instEl.value.trim() : '';
@@ -937,6 +985,7 @@ const ChefApp = (() => {
     // 5. Reset form & close dialog
     const form = document.getElementById('addRecipeForm');
     if (form) form.reset();
+    clearUploadedPhoto();
     closeAddRecipeModal();
 
     showToast(`🎉 "${name}" added successfully to SmartChef!`);
@@ -1710,6 +1759,9 @@ const ChefApp = (() => {
     submitModalChefQuestion,
     openAddRecipeModal,
     closeAddRecipeModal,
-    handleCreateRecipe
+    handleCreateRecipe,
+    handlePhotoFileSelect,
+    clearUploadedPhoto,
+    handlePhotoUrlInput
   };
 })();

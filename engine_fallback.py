@@ -521,7 +521,7 @@ def save_custom_recipe(recipe_dict: dict) -> list:
     
     # Fallback image if blank
     image = str(recipe_dict.get("image") or "").strip()
-    if not image or not image.startswith("http"):
+    if not image or (not image.startswith("http") and not image.startswith("data:image/")):
         if diet == "veg":
             image = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80"
         else:
